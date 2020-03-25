@@ -77,8 +77,9 @@ def main():
     if not os.path.exists(spark_config_dir):
         os.mkdir(spark_config_dir)
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
-    logging.info(f"Updating json.keyfile to {args.key_file_path} in {spark_config_file_path}")
-
+    logging.info(f"Updating {spark_config_file_path} json.keyfile\n")
+    logging.info(f"   to {args.key_file_path}")
+    
     spark_config_lines = [
         "spark.hadoop.google.cloud.auth.service.account.enable true\n",
         f"spark.hadoop.google.cloud.auth.service.account.json.keyfile {args.key_file_path}\n",
