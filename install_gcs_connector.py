@@ -32,11 +32,12 @@ def parse_args():
             paths = sorted(glob.glob(os.path.expanduser(key_file_regexp)), key=key_file_sort)
             if paths:            
                 args.key_file_path = next(iter(paths))
-                logging.info("Using key file: %s" % args.key_file_path)
+                logging.info(f"Using key file: {args.key_file_path}")
                 break
         else:
-            p.error("No json key files found in these locations: \n%s. Run \n\n  gcloud auth application-default login \n\nThen rerun this script." % (
-                ", ".join(key_file_regexps)))
+            regexps_string = '\n'.join(key_file_regexps)
+            p.error(f"No json key files found in these locations: \n{regexps_string}\n"
+                    "Run \n\n  gcloud auth application-default login \n\nThen rerun this script." )
     return args
 
 
@@ -64,10 +65,11 @@ def main():
     # download GCS connector jar
     local_jar_path = os.path.join(spark_home, "jars", os.path.basename(GCS_CONNECTOR_URL))
     try:
-        logging.info("Downloading %s \nto %s" % (GCS_CONNECTOR_URL, local_jar_path))
+        logging.info(f"Downloading {GCS_CONNECTOR_URL}")
+        logging.info(f"   to {local_jar_path}")
         urllib.request.urlretrieve(GCS_CONNECTOR_URL, local_jar_path)
     except Exception as e:
-        logging.error("Unable to download GCS connector to %s. %s" % (local_jar_path, e))
+        logging.error(f"Unable to download GCS connector to {local_jar_path}. {e}")
         return
 
     # update spark-defaults.conf
@@ -75,11 +77,11 @@ def main():
     if not os.path.exists(spark_config_dir):
         os.mkdir(spark_config_dir)
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
-    logging.info("Updating json.keyfile to %s in %s" % (args.key_file_path, spark_config_file_path))
+    logging.info(f"Updating json.keyfile to {args.key_file_path} in {spark_config_file_path}")
 
     spark_config_lines = [
         "spark.hadoop.google.cloud.auth.service.account.enable true\n",
-        "spark.hadoop.google.cloud.auth.service.account.json.keyfile %s\n" % args.key_file_path,
+        f"spark.hadoop.google.cloud.auth.service.account.json.keyfile {args.key_file_path}\n",
     ]
     
     try:
@@ -98,7 +100,7 @@ def main():
                 f.write(line)
 
     except Exception as e:
-        logging.error("Unable to update spark config %s. %s" % (spark_config_file_path, e))
+        logging.error(f"Unable to update spark config {spark_config_file_path}. {e}")
         return
 
 
