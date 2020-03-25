@@ -57,7 +57,7 @@ class PostInstallCommand(install):
         else:
             self.error("No keys found in these locations: \n%s." % (", ".join(key_file_regexps), e))
             self.error("Run \n\n  gcloud auth application-default login \n\n")
-            self.error("Then reinstall with: \n\n  python3 -m pip install -vvv --force-reinstall git+https://github.com/bw2/install-gcs-connector.git \n\n")
+            self.error("Then reinstall with: \n\n  python3 -m pip install -vvv --upgrade git+https://github.com/bw2/install-gcs-connector.git \n\n")
             return
 
         # update spark-defaults.conf
