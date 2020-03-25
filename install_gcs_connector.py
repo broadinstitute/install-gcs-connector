@@ -48,12 +48,13 @@ def is_dataproc_VM():
             return True
     except:
         pass
+    
     return False
 
     
 def main():
     if is_dataproc_VM():
-        logging.info("Running on a Dataproc VM. It should already have the GCS cloud connector installed.")
+        logging.info("This is a Dataproc VM which should already have the GCS cloud connector installed. Exiting...")
         return
 
     args = parse_args()
@@ -80,6 +81,7 @@ def main():
         "spark.hadoop.google.cloud.auth.service.account.enable true\n",
         "spark.hadoop.google.cloud.auth.service.account.json.keyfile %s\n" % args.key_file_path,
     ]
+    
     try:
         if os.path.isfile(spark_config_file_path):
             with open(spark_config_file_path, "rt") as f:
