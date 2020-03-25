@@ -1,4 +1,4 @@
-import argparase 
+import argparse 
 import glob
 import logging
 import os
@@ -39,7 +39,7 @@ def parse_args():
                 break
         else:
             p.error("No json key files found in these locations: \n%s. Run \n\n  gcloud auth application-default login \n\nThen rerun this script." % (
-                ", ".join(key_file_regexps))
+                ", ".join(key_file_regexps)))
     return args
 
 def is_dataproc_VM():
@@ -57,7 +57,7 @@ def main():
     args = parse_args()
 
     if is_dataproc_VM():
-        logging.info("Running on a Dataproc VM. It should already have the GCS cloud connector installed.", level=3)
+        logging.info("Running on a Dataproc VM. It should already have the GCS cloud connector installed.")
         return  # cloud connector is installed automatically on dataproc VMs 
 
         
@@ -66,7 +66,7 @@ def main():
     # download GCS connector jar
     local_jar_path = os.path.join(spark_home, "jars", os.path.basename(GCS_CONNECTOR_URL))
     try:
-        logging.info("Downloading %s to %s" % (GCS_CONNECTOR_URL, local_jar_path), level=3)
+        logging.info("Downloading %s to %s" % (GCS_CONNECTOR_URL, local_jar_path))
         urllib.request.urlretrieve(GCS_CONNECTOR_URL, local_jar_path)
     except Exception as e:
         logging.error("Unable to download GCS connector to %s. %s" % (local_jar_path, e))
@@ -77,7 +77,7 @@ def main():
     if not os.path.exists(spark_config_dir):
         os.mkdir(spark_config_dir)
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
-    logging.info("Updating json.keyfile to %s in %s" % (key_file_path, spark_config_file_path), level=3)
+    logging.info("Updating json.keyfile to %s in %s" % (key_file_path, spark_config_file_path))
 
     spark_config_lines = [
         "spark.hadoop.google.cloud.auth.service.account.enable true\n",
