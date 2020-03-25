@@ -64,7 +64,7 @@ def main():
     # download GCS connector jar
     local_jar_path = os.path.join(spark_home, "jars", os.path.basename(GCS_CONNECTOR_URL))
     try:
-        logging.info("Downloading %s to %s" % (GCS_CONNECTOR_URL, local_jar_path))
+        logging.info("Downloading %s \nto %s" % (GCS_CONNECTOR_URL, local_jar_path))
         urllib.request.urlretrieve(GCS_CONNECTOR_URL, local_jar_path)
     except Exception as e:
         logging.error("Unable to download GCS connector to %s. %s" % (local_jar_path, e))
