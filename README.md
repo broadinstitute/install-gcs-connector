@@ -8,7 +8,7 @@ Make sure you have `pyspark` or `hail` installed and are are logged in to to gcl
 
 Then, to install the GCS connector in pyspark, run:
 ```
-curl https://raw.githubusercontent.com/bw2/install-gcs-connector/master/install_gcs_connector.py | python3
+curl https://raw.githubusercontent.com/broadinstitute/install-gcs-connector/master/install_gcs_connector.py | python3
 ```
 
 
