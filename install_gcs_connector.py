@@ -2,9 +2,6 @@ import argparse
 import glob
 import logging
 import os
-from setuptools import setup
-from setuptools.command.install import install
-import socket
 import urllib.request
 
 from pyspark.find_spark_home import _find_spark_home
