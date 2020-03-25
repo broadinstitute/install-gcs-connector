@@ -21,7 +21,7 @@ python3 -m pip install --upgrade hail
 python3 -c 'import hail as hl; print(hl.hadoop_exists("gs://gcp-public-data-landsat/index.csv.gz"))'
 ```
 
-This should print `True`
+This should print `True` at the end.
 
 
 ### Overview
