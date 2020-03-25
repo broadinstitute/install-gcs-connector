@@ -14,7 +14,7 @@ python3 -m pip install -vvv git+https://github.com/bw2/install-gcs-connector.git
 
 
 ### Overview
-The [GCS connector](https://cloud.google.com/dataproc/docs/concepts/connectors/cloud-storage) allows [hail](https://hail.is/docs/0.2/utils/index.html)/spark/hadoop to read/write Google Storage bucket files directly.
+The [GCS connector](https://cloud.google.com/dataproc/docs/concepts/connectors/cloud-storage) allows [hail](https://hail.is/docs/0.2/utils/index.html)/spark/hadoop to read/write Google Storage files directly.
 
 It can be [tricky to install](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md), so this package automates these installation steps:
 
