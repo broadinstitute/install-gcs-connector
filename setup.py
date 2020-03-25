@@ -1,4 +1,3 @@
-# based on https://uoftcoders.github.io/studyGroup/lessons/python/packages/lesson/
 import glob
 import os
 from setuptools import setup
@@ -9,7 +8,6 @@ import urllib.request
 from pyspark.find_spark_home import _find_spark_home
 
 GCS_CONNECTOR_URL = 'https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/hadoop2-1.9.17/gcs-connector-hadoop2-1.9.17-shaded.jar'
-GENERIC_KEY_FILE_URL = 'https://raw.githubusercontent.com/macarthur-lab/seqr/master/deploy/secrets/shared/gcloud/service-account-key.json'
 
 def is_dataproc_VM():
     """Check if this installation is being executed on a Google Compute Engine dataproc VM"""
@@ -23,13 +21,12 @@ def is_dataproc_VM():
     
     
 class PostInstallCommand(install):
-    # from https://mvnrepository.com/artifact/com.google.cloud.bigdataoss/gcs-connector/hadoop2-1.9.17
 
     def run(self):
         install.run(self)
         
         if is_dataproc_VM():
-            self.announce("Running on Dataproc VM. Skipping GCS cloud connector installation.", level=3)
+            self.announce("Running on a Dataproc VM which should already have the GCS cloud connector installed.", level=3)
             return  # cloud connector is installed automatically on dataproc VMs 
 
         spark_home = _find_spark_home()
@@ -43,33 +40,25 @@ class PostInstallCommand(install):
             self.warn("Unable to download GCS connector to %s. %s" % (local_jar_path, e))
             return
 
-        # look for existing key files in the ~/.config. If there's more than one, select the newest.
-        try:
-            key_file_regexp = "~/.config/gcloud/legacy_credentials/*/adc.json"
-            key_file_sort = lambda file_path: -1 * os.path.getctime(file_path)
-            key_file_path = next(iter(sorted(glob.glob(os.path.expanduser(key_file_regexp)), key=key_file_sort)))
-            self.announce("Using key file: %s" % key_file_path, level=3)
-        except Exception as e:
-            self.warn("No keys found in %s. %s" % (key_file_regexp, e))
-            key_file_path = None
-
-        # if existing keys not found, download generic key that allows access to public (bucket-owner-pays) buckets.
-        if key_file_path is None:
-            local_key_dir = os.path.expanduser("~/.hail/gcs-keys")
-            try:
-                if not os.path.exists(local_key_dir):
-                    os.makedirs(local_key_dir)
-            except Exception as e:
-                self.warn("Unable to create directory %s. %s" % (local_key_dir, e))
-                return
-
-            key_file_path = os.path.join(local_key_dir, "gcs-connector-key.json")
-            try:
-                self.announce("Downloading %s to %s" % (GENERIC_KEY_FILE_URL, key_file_path), level=3)
-                urllib.request.urlretrieve(GENERIC_KEY_FILE_URL, key_file_path)
-            except Exception as e:
-                self.warn("Unable to download shared key from %s to %s. %s" % (GENERIC_KEY_FILE_URL, key_file_path, e))
-                return
+        # look for existing key files in ~/.config. 
+        key_file_regexps = [
+            "~/.config/gcloud/application_default_credentials.json", 
+            "~/.config/gcloud/legacy_credentials/*/adc.json",
+        ]
+        # if more than one file matches a glob pattern, select the newest.
+        key_file_sort = lambda file_path: -1 * os.path.getctime(file_path)          
+        key_file_path = None
+        for key_file_regexp in key_file_regexps:
+            paths = sorted(glob.glob(os.path.expanduser(key_file_regexp)), key=key_file_sort)
+            if paths:            
+                key_file_path = next(iter(paths))
+                self.announce("Using key file: %s" % key_file_path, level=3)
+                break
+        else:
+            self.error("No keys found in these locations: \n%s." % (", ".join(key_file_regexps), e))
+            self.error("Run \n\n  gcloud auth application-default login \n\n")
+            self.error("Then reinstall with: \n\n  python3 -m pip install -vvv --force-reinstall git+https://github.com/bw2/install-gcs-connector.git \n\n")
+            return
 
         # update spark-defaults.conf
         spark_config_dir = os.path.join(spark_home, "conf")
@@ -102,15 +91,15 @@ class PostInstallCommand(install):
             return
 
 setup(
-    name='hail_utils',
-    url='https://github.com/bw2/hail-utils',
+    name='install-gcs-connector',
+    url='https://github.com/bw2/install-gcs-connector',
     author='Ben',
     author_email='ben.weisburd@gmail.com',
-    packages=['hail_utils'],
+    packages=['install-gcs-connector'],
     install_requires=['hail'],
     version='0.1',
     license='MIT',
-    description='Misc. hail utils',
+    description='Automates the installatino of the Google Cloud Storage connector for hadoop as described in https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md',
     cmdclass={
         'install': PostInstallCommand,
     },
