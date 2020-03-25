@@ -42,6 +42,7 @@ def parse_args():
                 ", ".join(key_file_regexps)))
     return args
 
+
 def is_dataproc_VM():
     """Check if this installation is being executed on a Google Compute Engine dataproc VM"""
     try:
@@ -77,11 +78,11 @@ def main():
     if not os.path.exists(spark_config_dir):
         os.mkdir(spark_config_dir)
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
-    logging.info("Updating json.keyfile to %s in %s" % (key_file_path, spark_config_file_path))
+    logging.info("Updating json.keyfile to %s in %s" % (args.key_file_path, spark_config_file_path))
 
     spark_config_lines = [
         "spark.hadoop.google.cloud.auth.service.account.enable true\n",
-        "spark.hadoop.google.cloud.auth.service.account.json.keyfile %s\n" % key_file_path,
+        "spark.hadoop.google.cloud.auth.service.account.json.keyfile %s\n" % args.key_file_path,
     ]
     try:
         if os.path.isfile(spark_config_file_path):
