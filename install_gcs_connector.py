@@ -77,7 +77,7 @@ def main():
     if not os.path.exists(spark_config_dir):
         os.mkdir(spark_config_dir)
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
-    logging.info(f"Updating {spark_config_file_path} json.keyfile\n")
+    logging.info(f"Updating {spark_config_file_path} json.keyfile")
     logging.info(f"   to {args.key_file_path}")
     
     spark_config_lines = [
