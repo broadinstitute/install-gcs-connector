@@ -35,8 +35,8 @@ def parse_args():
                 logging.info(f"Using key file: {args.key_file_path}")
                 break
         else:
-            regexps_string = '\n'.join(key_file_regexps)
-            p.error(f"No json key files found in these locations: \n{regexps_string}\n"
+            regexps_string = '    '.join(key_file_regexps)
+            p.error(f"No json key files found in these locations: \n\n    {regexps_string}\n\n"
                     "Run \n\n  gcloud auth application-default login \n\nThen rerun this script." )
     return args
 
