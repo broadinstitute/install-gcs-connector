@@ -8,9 +8,20 @@ Make  sure you're logged into to gcloud via
 
 To install the GCS connector in pyspark, run:
 ```
-python3 -m pip install -vvv git+https://github.com/bw2/install-gcs-connector.git --upgrade
+python3 -m pip install -vvv --upgrade git+https://github.com/bw2/install-gcs-connector.git
 ```
 
+
+## Test
+
+You can check if it's working by running hail hadoop_exists:
+
+```
+python3 -m pip install --upgrade hail
+python3 -c 'import hail as hl; print(hl.hadoop_exists("gs://gcp-public-data-landsat/index.csv.gz"))'
+```
+
+This should print `True`
 
 
 ### Overview
