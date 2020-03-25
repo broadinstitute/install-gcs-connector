@@ -16,10 +16,10 @@ def parse_args():
     p.add_argument("-k", "--key-file-path", help="Service account key .json")
     args = p.parse_args()
     
-    if args.key_file_path:
-        if not os.path.isfile(args.key_file_path):
+    if args.key_file_path and not os.path.isfile(args.key_file_path):
             p.error(f"{args.key_file_path} not found")
-    else:
+
+    elif not args.key_file_path:
         # look for existing key files in ~/.config. 
         key_file_regexps = [
             "~/.config/gcloud/application_default_credentials.json", 
