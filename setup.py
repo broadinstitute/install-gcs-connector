@@ -95,11 +95,10 @@ setup(
     url='https://github.com/bw2/install-gcs-connector',
     author='Ben',
     author_email='ben.weisburd@gmail.com',
-    packages=['install-gcs-connector'],
     install_requires=['hail'],
     version='0.1',
     license='MIT',
-    description='Automates the installatino of the Google Cloud Storage connector for hadoop as described in https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md',
+    description='Automates the installation of the Google Cloud Storage connector for hadoop as described in https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md',
     cmdclass={
         'install': PostInstallCommand,
     },
