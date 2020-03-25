@@ -100,7 +100,7 @@ def main():
                 f.write(line)
 
     except Exception as e:
-        logging.warn("Unable to update spark config %s. %s" % (spark_config_file_path, e))
+        logging.error("Unable to update spark config %s. %s" % (spark_config_file_path, e))
         return
 
 
