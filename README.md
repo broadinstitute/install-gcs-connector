@@ -1,5 +1,11 @@
 
 ### Install GCS Connector
+
+Make  sure you're logged into to gcloud via  
+
+`gcloud auth login`  or  `gcloud auth application-default login`
+
+
 To install the GCS connector in pyspark, run:
 ```
 python3 -m pip install -vvv git+https://github.com/bw2/install-gcs-connector.git --upgrade
@@ -17,9 +23,5 @@ It can be [tricky to install](https://github.com/GoogleCloudDataproc/hadoop-conn
 2. finding your gcloud .json key file in ~/.config/gcloud/application_default_credentials.json (created by running gcloud auth application-default login) or in ~/.config/gcloud/legacy_credentials/*/adc.json (created by gcloud auth login) 
 3. updating your $SPARK_HOME/conf/spark-defaults.conf to add the key file path
 ```
-
-To install it, you must 
-- be logged in via `gcloud auth login` or `gcloud auth application-default login`
-- have [pyspark](https://spark.apache.org/docs/latest/api/python/index.html) or [hail](https://hail.is) installed 
 
 
