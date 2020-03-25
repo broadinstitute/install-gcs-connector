@@ -17,9 +17,9 @@ def parse_args():
     args = p.parse_args()
     
     if args.key_file_path and not os.path.isfile(args.key_file_path):
-            p.error(f"{args.key_file_path} not found")
-
-    elif not args.key_file_path:
+        p.error(f"{args.key_file_path} not found")
+        
+    if not args.key_file_path:
         # look for existing key files in ~/.config. 
         key_file_regexps = [
             "~/.config/gcloud/application_default_credentials.json", 
