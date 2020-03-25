@@ -55,13 +55,12 @@ def is_dataproc_VM():
 
     
 def main():
-    args = parse_args()
-
     if is_dataproc_VM():
         logging.info("Running on a Dataproc VM. It should already have the GCS cloud connector installed.")
-        return  # cloud connector is installed automatically on dataproc VMs 
+        return
 
-        
+    args = parse_args()
+
     spark_home = _find_spark_home()
 
     # download GCS connector jar
