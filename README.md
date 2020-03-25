@@ -1,7 +1,7 @@
 
 ### Install GCS Connector
 
-Make  sure you're logged into to gcloud via  
+Make sure you have `pyspark` or `hail` installed and are are logged into to gcloud via  
 
 `gcloud auth login`  or  `gcloud auth application-default login`
 
