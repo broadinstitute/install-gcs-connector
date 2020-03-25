@@ -8,7 +8,7 @@ Make  sure you're logged into to gcloud via
 
 To install the GCS connector in pyspark, run:
 ```
-python3 -m pip install -vvv --upgrade git+https://github.com/bw2/install-gcs-connector.git
+curl https://raw.githubusercontent.com/bw2/install-gcs-connector/master/install_gcs_connector.py | python3
 ```
 
 
