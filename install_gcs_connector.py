@@ -20,7 +20,7 @@ def parse_args():
         p.error(f"{args.key_file_path} not found")
         
     if not args.key_file_path:
-        # look for existing key files in ~/.config. 
+        # look for existing key files in ~/.config
         key_file_regexps = [
             "~/.config/gcloud/application_default_credentials.json", 
             "~/.config/gcloud/legacy_credentials/*/adc.json",
@@ -41,7 +41,7 @@ def parse_args():
 
 
 def is_dataproc_VM():
-    """Check if this installation is being executed on a Google Compute Engine dataproc VM"""
+    """Check if this installation is running on a Dataproc VM"""
     try:
         dataproc_metadata = urllib.request.urlopen("http://metadata.google.internal/0.1/meta-data/attributes/dataproc-bucket").read()
         if dataproc_metadata.decode("UTF-8").startswith("dataproc"):
