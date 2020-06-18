@@ -12,6 +12,18 @@ curl https://raw.githubusercontent.com/broadinstitute/install-gcs-connector/mast
 ```
 
 
+### Enable access to Requestor-Pays buckets
+
+Google Bucket owners can enable ['Requestor Pays'](https://cloud.google.com/storage/docs/requester-pays) on their buckets so that any person downloading the data, rather than the bucket owners, will pay Google for [network egress costs](https://cloud.google.com/compute/network-pricing). 
+
+To use the GCS connector to access requestor-pays buckets, you should run the installer with the  --gcs-requestor-pays-project arg:
+
+```
+wget https://raw.githubusercontent.com/broadinstitute/install-gcs-connector/master/install_gcs_connector.py 
+
+python3 install_gcs_connector.py --gcs-requestor-pays-project <your-gcloud-project>
+```
+
 ## Test
 
 You can check if it's working by running hail hadoop_exists:
