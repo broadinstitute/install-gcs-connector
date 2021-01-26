@@ -33,8 +33,8 @@ GCS_CONNECTOR_URL = 'https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("-k", "--key-file-path", help="Service account key .json")
-    p.add_argument("--gcs-requestor-pays-project", help="If specified, this google cloud project will be charged for access to "
-                   "requestor-pays buckets via spark/hadoop. See https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration")
+    p.add_argument("--gcs-requester-pays-project", "--gcs-requestor-pays-project", help="If specified, this google cloud project will be charged for access to "
+                   "requester pays buckets via spark/hadoop. See https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration")
     args = p.parse_args()
     
     if args.key_file_path and not os.path.isfile(args.key_file_path):
@@ -106,10 +106,10 @@ def main():
         f"spark.hadoop.google.cloud.auth.service.account.json.keyfile {args.key_file_path}\n",
     ]
     
-    if args.gcs_requestor_pays_project:
+    if args.gcs_requester_pays_project:
         spark_config_lines.extend([
             "spark.hadoop.fs.gs.requester.pays.mode AUTO\n",
-            f"spark.hadoop.fs.gs.requester.pays.project.id {args.gcs_requestor_pays_project}\n",
+            f"spark.hadoop.fs.gs.requester.pays.project.id {args.gcs_requester_pays_project}\n",
         ])
     
     try:
