@@ -14,7 +14,7 @@ GCS_CONNECTOR_URL = 'https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("-k", "--key-file-path", help="Service account key .json")
-    p.add_argument("--gcs-requester-pays-project", help="If specified, this google cloud project will be charged for access to "
+    p.add_argument("--gcs-requester-pays-project", "--gcs-requestor-pays-project", help="If specified, this google cloud project will be charged for access to "
                    "requester pays buckets via spark/hadoop. See https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration")
     args = p.parse_args()
     
