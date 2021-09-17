@@ -22,13 +22,40 @@ import glob
 import logging
 import os
 import urllib.request
+import xml.etree.ElementTree as ET
 
 from pyspark.find_spark_home import _find_spark_home
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO)
 
 
-GCS_CONNECTOR_URL = 'https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/hadoop2-1.9.17/gcs-connector-hadoop2-1.9.17-shaded.jar'
+def parse_connector_version(version):
+    """Parse a connector version string into a tuple (hadoop version, major version, minor version, patch version, release candidate)."""
+    hadoop_version, version = version.split("-", maxsplit=1)
+    hadoop_version = int(hadoop_version[6:])
+
+    release_candidate = None
+    if "-" in version:
+        version, tag = version.split("-", maxsplit=1)
+        if tag.startswith("RC"):
+            release_candidate = int(tag[2:])
+
+    major_version, minor_version, patch_version = map(int, version.split("."))
+
+    return (hadoop_version, major_version, minor_version, patch_version, release_candidate or float("inf"))
+
+
+def get_gcs_connector_url():
+    """Get the URL of the jar file for the latest version of the Hadoop 2 connector."""
+    with urllib.request.urlopen("https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/maven-metadata.xml") as f:
+        metadata = f.read().decode("utf-8")
+
+    versions = [el.text for el in ET.fromstring(metadata).findall("./versioning/versions/version")]
+    hadoop2_versions = [version for version in versions if version.startswith("hadoop2-")]
+    latest_version = sorted(hadoop2_versions, key=parse_connector_version)[-1]
+
+    return f"https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/{latest_version}/gcs-connector-{latest_version}-shaded.jar"
+
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -84,11 +111,12 @@ def main():
     spark_home = _find_spark_home()
 
     # download GCS connector jar
-    local_jar_path = os.path.join(spark_home, "jars", os.path.basename(GCS_CONNECTOR_URL))
     try:
-        logging.info(f"Downloading {GCS_CONNECTOR_URL}")
+        gcs_connector_url = get_gcs_connector_url()
+        local_jar_path = os.path.join(spark_home, "jars", os.path.basename(gcs_connector_url))
+        logging.info(f"Downloading {gcs_connector_url}")
         logging.info(f"   to {local_jar_path}")
-        urllib.request.urlretrieve(GCS_CONNECTOR_URL, local_jar_path)
+        urllib.request.urlretrieve(gcs_connector_url, local_jar_path)
     except Exception as e:
         logging.error(f"Unable to download GCS connector to {local_jar_path}. {e}")
         return
