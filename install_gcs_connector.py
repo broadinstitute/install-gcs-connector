@@ -59,7 +59,7 @@ def get_gcs_connector_url():
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("-k", "--key-file-path", help="Service account key .json")
+    p.add_argument("-k", "--key-file-path", help="Service account key .json path. This path is just added to the spark config file. The .json file itself doesn't need to exist until the GCS connector is first used.")
     p.add_argument("--gcs-requester-pays-project", "--gcs-requestor-pays-project", help="If specified, this google cloud project will be charged for access to "
                    "requester pays buckets via spark/hadoop. See https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration")
     args = p.parse_args()
@@ -85,7 +85,8 @@ def parse_args():
         else:
             regexps_string = '    '.join(key_file_regexps)
             p.error(f"No json key files found in these locations: \n\n    {regexps_string}\n\n"
-                    "Run \n\n  gcloud auth application-default login \n\nThen rerun this script." )
+                    "Run \n\n  gcloud auth application-default login \n\nthen rerun this script, \n"
+                    "or use --key-file-path to specify where the key file exists (or will exist later).\n\n")
     return args
 
 
