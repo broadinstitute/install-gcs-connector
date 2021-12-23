@@ -65,7 +65,7 @@ def parse_args():
     args = p.parse_args()
     
     if args.key_file_path and not os.path.isfile(args.key_file_path):
-        p.error(f"{args.key_file_path} not found")
+        print(f"WARNING: {args.key_file_path} file doesn't exist")
         
     if not args.key_file_path:
         # look for existing key files in ~/.config
