@@ -85,8 +85,8 @@ def parse_args():
         else:
             regexps_string = '    '.join(key_file_regexps)
             p.error(f"No json key files found in these locations: \n\n    {regexps_string}\n\n"
-                    "Run \n\n  gcloud auth application-default login \n\nthen rerun this script, \n"
-                    "or use --key-file-path to specify where the key file exists (or will exist later).\n\n")
+                    "Run \n\n  gcloud auth application-default login \n\nthen rerun this script, "
+                    "or use --key-file-path to specify where the key file exists (or will exist later).\n")
     return args
 
 
