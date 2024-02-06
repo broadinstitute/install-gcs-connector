@@ -63,22 +63,22 @@ def parse_args():
     p.add_argument("--gcs-requester-pays-project", "--gcs-requestor-pays-project", help="If specified, this google cloud project will be charged for access to "
                    "requester pays buckets via spark/hadoop. See https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration")
     args = p.parse_args()
-    
+
     if args.key_file_path and not os.path.isfile(args.key_file_path):
         logging.warning(f"{args.key_file_path} file doesn't exist")
-        
+
     if not args.key_file_path:
         # look for existing key files in ~/.config
         key_file_regexps = [
-            "~/.config/gcloud/application_default_credentials.json", 
+            "~/.config/gcloud/application_default_credentials.json",
             "~/.config/gcloud/legacy_credentials/*/adc.json",
         ]
-        
+
         # if more than one file matches a glob pattern, select the newest.
-        key_file_sort = lambda file_path: -1 * os.path.getctime(file_path)          
+        key_file_sort = lambda file_path: -1 * os.path.getctime(file_path)
         for key_file_regexp in key_file_regexps:
             paths = sorted(glob.glob(os.path.expanduser(key_file_regexp)), key=key_file_sort)
-            if paths:            
+            if paths:
                 args.key_file_path = next(iter(paths))
                 logging.info(f"Using key file: {args.key_file_path}")
                 break
@@ -98,10 +98,10 @@ def is_dataproc_VM():
             return True
     except:
         pass
-    
+
     return False
 
-    
+
 def main():
     if is_dataproc_VM():
         logging.info("This is a Dataproc VM which should already have the GCS cloud connector installed. Exiting...")
@@ -121,7 +121,7 @@ def main():
     local_jar_path = os.path.join(spark_home, "jars", os.path.basename(gcs_connector_url))
     logging.info(f"Downloading {gcs_connector_url}")
     logging.info(f"   to {local_jar_path}")
-    
+
     try:
         urllib.request.urlretrieve(gcs_connector_url, local_jar_path)
     except Exception as e:
@@ -135,18 +135,18 @@ def main():
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
     logging.info(f"Updating {spark_config_file_path} json.keyfile")
     logging.info(f"Setting json.keyfile = {args.key_file_path}")
-    
+
     spark_config_lines = [
         "spark.hadoop.google.cloud.auth.service.account.enable true\n",
         f"spark.hadoop.google.cloud.auth.service.account.json.keyfile {args.key_file_path}\n",
     ]
-    
+
     if args.gcs_requester_pays_project:
         spark_config_lines.extend([
             "spark.hadoop.fs.gs.requester.pays.mode AUTO\n",
             f"spark.hadoop.fs.gs.requester.pays.project.id {args.gcs_requester_pays_project}\n",
         ])
-    
+
     try:
         # spark hadoop options docs @ https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration
         if os.path.isfile(spark_config_file_path):
