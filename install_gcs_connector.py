@@ -108,7 +108,6 @@ def parse_args():
     if args.key_file_path and not os.path.isfile(args.key_file_path):
         logging.warning(f"{args.key_file_path} file doesn't exist")
 
-
     if THE_SPARK_VERSION >= (3, 5, 0):
         if args.key_file_path is not None and args.auth_type != "SERVICE_ACCOUNT_JSON_KEYFILE":
             raise ValueError(f"In Spark >=3.5.0, when --key-file-path is specified, --auth-type must be SERVICE_ACCOUNT_JSON_KEYFILE")
