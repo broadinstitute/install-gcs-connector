@@ -44,7 +44,7 @@ def spark_version() -> Tuple[int, int, int]:
 THE_SPARK_VERSION = spark_version()
 
 
-def parse_connector_version(version) -> Tuple[int, int, int, int, Union[int, float]]:
+def parse_connector_version(version) -> Tuple[int, int, int, int, Union[int, float], str]:
     """Parse a connector version string into a tuple (hadoop version, major version, minor version, patch version, release candidate)."""
 
     parts = version.split('-')
