@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from typing import Tuple, Union
 import argparse
 import glob
 import logging
@@ -25,41 +26,80 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 from pyspark.find_spark_home import _find_spark_home
+from pyspark.version import __version__ as spark_version_string
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO)
 
 
-def parse_connector_version(version):
+def spark_version() -> Tuple[int, int, int]:
+    split = spark_version_string.split('.')
+    if len(split) != 3:
+        raise ValueError(spark_version_string)
+    try:
+        return tuple(int(x) for x in split)
+    except ValueError as err:
+        raise ValueError(spark_version_string) from err
+
+
+THE_SPARK_VERSION = spark_version()
+
+
+def parse_connector_version(version) -> Tuple[int, int, int, int, Union[int, float]]:
     """Parse a connector version string into a tuple (hadoop version, major version, minor version, patch version, release candidate)."""
-    hadoop_version, version = version.split("-", maxsplit=1)
-    hadoop_version = int(hadoop_version[6:])
 
-    release_candidate = None
-    if "-" in version:
-        version, tag = version.split("-", maxsplit=1)
-        if tag.startswith("RC"):
-            release_candidate = int(tag[2:])
+    parts = version.split('-')
 
-    major_version, minor_version, patch_version = map(int, version.split("."))
+    try:
+        release_candidate = None
+        if parts[0].startswith('hadoop'):
+            hadoop_version = int(parts[0][6:])
+            jar_version = parts[1]
+            if len(parts) > 2:
+                assert parts[2].startswith('RC')
+                release_candidate = int(parts[2][2:])
+        elif len(parts) > 1 and parts[1].startswith('hadoop'):
+            jar_version = parts[0]
+            hadoop_version = int(parts[1][6:])
+            if len(parts) > 2:
+                assert parts[2].startswith('RC'), version
+                release_candidate = int(parts[2][2:])
+        else:
+            jar_version = parts[0]
+            hadoop_version = 3  # starting with version 3.0.0, no hadoop version is present
+            if len(parts) > 1:
+                assert parts[1].startswith('RC'), version
+                release_candidate = int(parts[1][2:])
 
-    return (hadoop_version, major_version, minor_version, patch_version, release_candidate or float("inf"))
+        major_jar_version, minor_jar_version, patch_jar_version = map(int, jar_version.split('.'))
+    except ValueError as err:
+        raise ValueError(f'unexpected version string: {version} {jar_version}') from err
+
+    return (hadoop_version, major_jar_version, minor_jar_version, patch_jar_version, release_candidate or float("inf"), version)
 
 
 def get_gcs_connector_url():
-    """Get the URL of the jar file for the latest version of the Hadoop 2 connector."""
+    """Get the URL of the jar file for the latest version of the Hadoop connector."""
     with urllib.request.urlopen("https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/maven-metadata.xml") as f:
         metadata = f.read().decode("utf-8")
 
-    versions = [el.text for el in ET.fromstring(metadata).findall("./versioning/versions/version")]
-    hadoop2_versions = [version for version in versions if version.startswith("hadoop2-")]
-    latest_version = sorted(hadoop2_versions, key=parse_connector_version)[-1]
+    versions = [parse_connector_version(el.text) for el in ET.fromstring(metadata).findall("./versioning/versions/version")]
+    if spark_version() < (3, 5, 0):
+        hadoop2_versions = [v for v in versions if v[0] == 2]
+        latest_version = sorted(hadoop2_versions, key=lambda x: x[1:5])[-1]
+    else:
+        hadoop3_versions = [v for v in versions if v[0] == 3]
+        latest_version = sorted(hadoop3_versions, key=lambda x: x[1:5])[-1]
 
-    return f"https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/{latest_version}/gcs-connector-{latest_version}-shaded.jar"
+    latest_version_string = latest_version[-1]
+    return f"https://repo1.maven.org/maven2/com/google/cloud/bigdataoss/gcs-connector/{latest_version_string}/gcs-connector-{latest_version_string}-shaded.jar"
 
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("-k", "--key-file-path", help="Service account key .json path. This path is just added to the spark config file. The .json file itself doesn't need to exist until the GCS connector is first used.")
+    p.add_argument("-a", "--auth-type",
+                   help="How to authenticate. For Spark <3.5.0, this option must be unspecified. For Spark >=3.5.0, use --auth-type APPLICATION_DEFAULT for your laptop. Use --auth-type COMPUTE_ENGINE for GCE VMs. Use SERVICE_ACCOUNT_JSON_KEYFILE with --key-file-path for an explicit key file location. For Spark >=3.5.0, we default to APPLICATION_DEFAULT.")
+    p.add_argument("-k", "--key-file-path",
+                   help="Required for Spark <3.5.0. Service account key .json path. This path is just added to the spark config file. The .json file itself doesn't need to exist until the GCS connector is first used.")
     p.add_argument("--gcs-requester-pays-project", "--gcs-requestor-pays-project", help="If specified, this google cloud project will be charged for access to "
                    "requester pays buckets via spark/hadoop. See https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#cloud-storage-requester-pays-feature-configuration")
     args = p.parse_args()
@@ -67,26 +107,47 @@ def parse_args():
     if args.key_file_path and not os.path.isfile(args.key_file_path):
         logging.warning(f"{args.key_file_path} file doesn't exist")
 
-    if not args.key_file_path:
-        # look for existing key files in ~/.config
-        key_file_regexps = [
-            "~/.config/gcloud/application_default_credentials.json",
-            "~/.config/gcloud/legacy_credentials/*/adc.json",
-        ]
 
-        # if more than one file matches a glob pattern, select the newest.
-        key_file_sort = lambda file_path: -1 * os.path.getctime(file_path)
-        for key_file_regexp in key_file_regexps:
-            paths = sorted(glob.glob(os.path.expanduser(key_file_regexp)), key=key_file_sort)
-            if paths:
-                args.key_file_path = next(iter(paths))
-                logging.info(f"Using key file: {args.key_file_path}")
-                break
-        else:
-            regexps_string = '    '.join(key_file_regexps)
-            p.error(f"No json key files found in these locations: \n\n    {regexps_string}\n\n"
-                    "Run \n\n  gcloud auth application-default login \n\nthen rerun this script, "
-                    "or use --key-file-path to specify where the key file exists (or will exist later).\n")
+    if THE_SPARK_VERSION >= (3, 5, 0):
+        if args.key_file_path is not None and args.auth_type != "SERVICE_ACCOUNT_JSON_KEYFILE":
+            raise ValueError(f"In Spark >=3.5.0, when --key-file-path is specified, --auth-type must be SERVICE_ACCOUNT_JSON_KEYFILE")
+        if args.auth_type is None:
+            args.auth_type = "APPLICATION_DEFAULT"
+
+        valid_auth_types = {
+            "ACCESS_TOKEN_PROVIDER",
+            "APPLICATION_DEFAULT",
+            "COMPUTE_ENGINE",
+            "SERVICE_ACCOUNT_JSON_KEYFILE",
+            "UNAUTHENTICATED",
+            "USER_CREDENTIALS"
+        }
+        if args.auth_type not in valid_auth_types:
+            raise ValueError(f'--auth-type must be one of {" ".join(valid_auth_types)}, found: {args.auth_type}')
+    else:
+        if args.auth_type is not None:
+            raise ValueError(f"--auth-type cannot be used with Spark <3.5.0. We think you have spark {THE_SPARK_VERSION}.")
+        if not args.key_file_path:
+            # look for existing key files in ~/.config
+            key_file_regexps = [
+                "~/.config/gcloud/application_default_credentials.json",
+                "~/.config/gcloud/legacy_credentials/*/adc.json",
+            ]
+
+            # if more than one file matches a glob pattern, select the newest.
+            key_file_sort = lambda file_path: -1 * os.path.getctime(file_path)
+            for key_file_regexp in key_file_regexps:
+                paths = sorted(glob.glob(os.path.expanduser(key_file_regexp)), key=key_file_sort)
+                if paths:
+                    args.key_file_path = next(iter(paths))
+                    logging.info(f"Using key file: {args.key_file_path}")
+                    break
+            else:
+                regexps_string = '    '.join(key_file_regexps)
+                p.error(f"No json key files found in these locations: \n\n    {regexps_string}\n\n"
+                        "Run \n\n  gcloud auth application-default login \n\nthen rerun this script, "
+                        "or use --key-file-path to specify where the key file exists (or will exist later).\n")
+
     return args
 
 
@@ -133,13 +194,26 @@ def main():
     if not os.path.exists(spark_config_dir):
         os.mkdir(spark_config_dir)
     spark_config_file_path = os.path.join(spark_config_dir, "spark-defaults.conf")
-    logging.info(f"Updating {spark_config_file_path} json.keyfile")
-    logging.info(f"Setting json.keyfile = {args.key_file_path}")
 
-    spark_config_lines = [
-        "spark.hadoop.google.cloud.auth.service.account.enable true\n",
-        f"spark.hadoop.google.cloud.auth.service.account.json.keyfile {args.key_file_path}\n",
-    ]
+
+    if THE_SPARK_VERSION >= (3, 5, 0):
+        logging.info(f"Updating {spark_config_file_path} fs.gs.auth.type")
+        logging.info(f"Setting fs.gs.auth.type = {args.auth_type}")
+        spark_config_lines = [
+            f"spark.hadoop.fs.gs.auth.type {args.auth_type}\n",
+        ]
+        if args.key_file_path:
+            spark_config_lines = [
+                f"spark.hadoop.fs.gs.auth.service.account.json.keyfile {args.key_file_path}\n",
+            ]
+    else:
+        logging.info(f"Updating {spark_config_file_path} json.keyfile")
+        logging.info(f"Setting json.keyfile = {args.key_file_path}")
+
+        spark_config_lines = [
+            "spark.hadoop.google.cloud.auth.service.account.enable true\n",
+            f"spark.hadoop.google.cloud.auth.service.account.json.keyfile {args.key_file_path}\n",
+        ]
 
     if args.gcs_requester_pays_project:
         spark_config_lines.extend([
