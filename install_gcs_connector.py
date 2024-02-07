@@ -35,8 +35,9 @@ def spark_version() -> Tuple[int, int, int]:
     split = spark_version_string.split('.')
     if len(split) != 3:
         raise ValueError(spark_version_string)
+    major, minor, patch = split
     try:
-        return tuple(int(x) for x in split)
+        return int(major), int(minor), int(patch)
     except ValueError as err:
         raise ValueError(spark_version_string) from err
 
@@ -72,7 +73,7 @@ def parse_connector_version(version) -> Tuple[int, int, int, int, Union[int, flo
 
         major_jar_version, minor_jar_version, patch_jar_version = map(int, jar_version.split('.'))
     except ValueError as err:
-        raise ValueError(f'unexpected version string: {version} {jar_version}') from err
+        raise ValueError(f'unexpected version string: {version}') from err
 
     return (hadoop_version, major_jar_version, minor_jar_version, patch_jar_version, release_candidate or float("inf"), version)
 
